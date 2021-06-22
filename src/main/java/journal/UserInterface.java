@@ -1,8 +1,8 @@
-/**
- * 
- */
 package journal;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Scanner;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,7 +10,8 @@ import org.apache.logging.log4j.Logger;
 
 
 /**
- * @author ocean
+ * User Interface of the command line journal program.
+ * @author Kenneth Eng
  *
  */
 public class UserInterface {
@@ -19,10 +20,17 @@ public class UserInterface {
 	Boolean isRunning = true;
 	
 	public static Logger log = LogManager.getLogger( UserInterface.class);
+	
 	public static void main(String[] args) {
-//		log.info("This is an INFO level log message!");
-//		 log.error("This is an ERROR level log message!");
+		log.info("This is an Journal Application!");
+		// log.error("This is an ERROR level log message!");
+		
+		//Intantiate a postgreSQL connection
+		//PostgreSQLConnect pc = PostgreSQLConnect.getInstacne();
+		
 		try {
+			
+			
 			UserInterface menu = new UserInterface();
 			menu.Render();
 			
@@ -32,12 +40,14 @@ public class UserInterface {
 		}
 	
 	}
+
+	
 	/*
 	 * Method that render the program command line UI 
 	 */
 	public void Render() {
-		System.out.println("          Welcome to Yinkin Journal          ");
-		System.out.println("--------------- Archive ---------------");
+		System.out.println("                          Welcome to Yinkin Journal                          ");
+		System.out.println("---------------------------------- Archive ----------------------------------");
 		while(isRunning) {
 			try {
 				mainMenu();
@@ -51,21 +61,29 @@ public class UserInterface {
 		
 	}
 	
+	/*
+	 * Method that load all of the articles in the database
+	 */
 	private void loadAllArticles() {
 		journals = dao.retrieveAllJournals();
 		
 	}
 	
+	/*
+	 * Method that displays options for user to choose from
+	 */
 	private void mainMenu() throws UserInputException {
 		
 		
 		
 		loadAllArticles();
+		System.out.println("Journals :  " );
 		for (int i = 0; i < journals.length; i++) {			
-			System.out.println("Journal "  + journals[i].getTitle());
+			System.out.print(i+1 + ". "  + journals[i].getTitle() + " ");
 		}
-		
-		System.out.println("Please type in the number of the following article");
+		System.out.println("");
+		System.out.println("");
+		System.out.println("Please type in the number of the rticle or type 'add' to insert record");
 		Scanner sc = new Scanner(System.in);
 
 		if(sc.hasNextInt()) {
@@ -73,21 +91,69 @@ public class UserInterface {
 			if (input >= 1 && input <= 5) {
 				displayArticle(input);
 			} else {
-				 log.error("User enter wrong inputs!");
 				throw new UserInputException("Input is not within range of 1 to 5");
 			}
-			
+
+		} else if (sc.hasNext()) {
+			addArticleSubMenu(sc);
 		}
 		
 		subMenu();
 		//clearScreen();
 	}
-	public static void clearScreen() {  
-//	    System.out.print("\033[H\033[2J");  
-//	    System.out.flush();
-		//System.out.print("\033\143");
-	}  
 	
+	/*
+	 * Method that ask user for the local file path and call the readfile() method to 
+	 * attempt to create file.
+	 */
+	private void addArticleSubMenu(Scanner sc) throws UserInputException {
+		
+		if(sc.next().toLowerCase().contains("add") ) {
+			System.out.println("Please enter the text file path:");
+			
+			String path = sc.next();
+			
+			if (!path.isBlank()) {
+				readFile(path);
+				
+				//System.out.println("Please enter the file path");
+			} else {
+				
+				throw new UserInputException();
+				
+			}
+			
+			
+		}	
+	}
+	
+	/*
+	 * Method that read local file 
+	 * 
+	 * The method will handle the file Exceptions on its own 
+	 * 
+	 * @param path: the file path
+	 */
+	private void readFile(String path) {
+		//path = "C:\\Users\\ocean\\Documents\\revature\\ben_section\\proj1\\article0.txt";
+		 File file = new File(path);
+		 try {
+			  BufferedReader br = new BufferedReader(new FileReader(file));
+			  
+			  String st;
+			  System.out.println("---------------------------------- New Article ----------------------------------");
+			  while ((st = br.readLine()) != null) {
+			    System.out.println(st);
+			  }
+			  System.out.println("---------------------------------- article added ----------------------------------");
+				
+		 } catch(Exception e) { System.out.println("file doens't exist");}
+	}
+
+	
+	/*
+	 * Method that displays restart/quit options for user to choose from
+	 */
 	private void subMenu() {
 		System.out.println("   Hit enter to continue or type exit to quit    ");
 		Scanner sc = new Scanner(System.in);
@@ -106,16 +172,41 @@ public class UserInterface {
 		 
 	}
 	
+	/*
+	 * Method that prompt user for inputs to create article on command line interface
+	 */
+	private void createArticle() {
+		System.out.println("|\t You can create new article here "+ "\t|");
+	}
+	
+	/*
+	 * Method that displays the article retrieved from postgreSQL database
+	 *
+	 * @param userInput: an integer value which entered by the user to decide which 
+	 * article the method will retrieve.
+	 */
 	private void displayArticle(int userInput) {
 		Journal j = dao.getJournalById(userInput-1);
 		
-		System.out.println("| title: " + j.getTitle() + " |");
-		System.out.println("| author: " + j.getAuthor() + " |");
-		System.out.println("| date: " + j.getCreatedDate() + " |");
-		System.out.println("|\t" + j.getArticle()[0] + " |");
-		System.out.println("");
-		System.out.println("|\t" +j.getArticle()[1] + " |");
-		System.out.println(" -------------------------------------------- \r ");
+		System.out.println("|\t title: " + j.getTitle() + "\t|");
+		System.out.println("|\t author: " + j.getAuthor() + "\t|");
+		System.out.println("|\t date: " + j.getCreatedDate() + "\t|");
+		try {
+			int l = j.getArticle()[0].length();
+			System.out.println("\t" + j.getArticle()[0] + " ");
+			System.out.println("");
+			System.out.println("\t" +j.getArticle()[1] + " ");
+			System.out.println(" -------------------------------------------- \r ");
+		} catch(IndexOutOfBoundsException e) {
+			
+		}
 	}
 
+	
+	
+	public static void clearScreen() {  
+//	    System.out.print("\033[H\033[2J");  
+//	    System.out.flush();
+		//System.out.print("\033\143");
+	}  
 }

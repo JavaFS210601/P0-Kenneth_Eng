@@ -95,11 +95,22 @@ public class UserInterface {
 			}
 
 		} else if (sc.hasNext()) {
+			createArticle();
 			addArticleSubMenu(sc);
 		}
 		
 		subMenu();
 		//clearScreen();
+	}
+	
+
+	/*
+	 * Method that prompt user for inputs to create article on command line interface
+	 */
+	private void createArticle() {
+		System.out.println("|\t You can create new article here "+ "\t|");
+		System.out.println("What is the title of the article ");
+		System.out.println("Whos is the author ");
 	}
 	
 	/*
@@ -172,12 +183,6 @@ public class UserInterface {
 		 
 	}
 	
-	/*
-	 * Method that prompt user for inputs to create article on command line interface
-	 */
-	private void createArticle() {
-		System.out.println("|\t You can create new article here "+ "\t|");
-	}
 	
 	/*
 	 * Method that displays the article retrieved from postgreSQL database

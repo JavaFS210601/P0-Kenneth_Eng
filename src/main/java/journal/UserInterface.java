@@ -26,7 +26,7 @@ public class UserInterface {
 		// log.error("This is an ERROR level log message!");
 		
 		//Intantiate a postgreSQL connection
-		//PostgreSQLConnect pc = PostgreSQLConnect.getInstacne();
+		PostgreSQLConnect pc = PostgreSQLConnect.getInstacne();
 		
 		try {
 			
@@ -48,16 +48,21 @@ public class UserInterface {
 	public void Render() {
 		System.out.println("                          Welcome to Yinkin Journal                          ");
 		System.out.println("---------------------------------- Archive ----------------------------------");
+		Scanner sc = new Scanner(System.in);
 		while(isRunning) {
 			try {
-				mainMenu();
-
+				//mainMenu();
+				
+				listArticleMenu(sc);	
+				
 			} catch(UserInputException ue) { 
+				log.error(ue.getMessage());
 				System.out.println("InValid Input. Please try again.\n");
 				System.out.println("|||||||||||||||| New ||||||||||| Ticket ||||||||||||||||");
 				System.out.println("\n");
 			} 
 		}
+		sc.close();
 		
 	}
 	
@@ -74,8 +79,10 @@ public class UserInterface {
 	 */
 	private void mainMenu() throws UserInputException {
 		
-		
-		
+	}
+	
+	
+	private void listArticleMenu(Scanner sc) throws UserInputException {
 		loadAllArticles();
 		System.out.println("Journals :  " );
 		for (int i = 0; i < journals.length; i++) {			
@@ -83,34 +90,49 @@ public class UserInterface {
 		}
 		System.out.println("");
 		System.out.println("");
-		System.out.println("Please type in the number of the rticle or type 'add' to insert record");
-		Scanner sc = new Scanner(System.in);
+		System.out.println("***Please type in the number of the article***");
+		System.out.println("***type 'add' to insert record with local file***");
+		System.out.println("***type 'create' to make a record with command line***");
+		
 
 		if(sc.hasNextInt()) {
 			int input = sc.nextInt(); 
 			if (input >= 1 && input <= 5) {
 				displayArticle(input);
 			} else {
+				log.warn("User enter " + input + " and cause problem");
+				
 				throw new UserInputException("Input is not within range of 1 to 5");
 			}
 
-		} else if (sc.hasNext()) {
-			createArticle();
-			addArticleSubMenu(sc);
-		}
+		} else if (sc.hasNext() ) {
+			String input = sc.next(); 
+			if (input.contains("add")) {
+				addArticleSubMenu(sc);
+			} else if (input.contains("create")) {
+				createArticle(sc); 
+			} else {
+				
+				throw new UserInputException("user enter wrong string keywords:" + input);
+			}
+			
+		} 
 		
-		subMenu();
+		exitMenu(sc);
 		//clearScreen();
 	}
+	
 	
 
 	/*
 	 * Method that prompt user for inputs to create article on command line interface
 	 */
-	private void createArticle() {
-		System.out.println("|\t You can create new article here "+ "\t|");
-		System.out.println("What is the title of the article ");
-		System.out.println("Whos is the author ");
+	private void createArticle(Scanner sc) {
+		
+			System.out.println("|\t You can create new article here "+ "\t|");
+			System.out.println("What is the title of the article ");
+			System.out.println("Whos is the author ");
+		
 	}
 	
 	/*
@@ -119,23 +141,17 @@ public class UserInterface {
 	 */
 	private void addArticleSubMenu(Scanner sc) throws UserInputException {
 		
-		if(sc.next().toLowerCase().contains("add") ) {
 			System.out.println("Please enter the text file path:");
 			
 			String path = sc.next();
 			
 			if (!path.isBlank()) {
 				readFile(path);
-				
-				//System.out.println("Please enter the file path");
 			} else {
 				
-				throw new UserInputException();
+				throw new UserInputException("user enter wrong file path");
 				
-			}
-			
-			
-		}	
+			}	
 	}
 	
 	/*
@@ -158,16 +174,19 @@ public class UserInterface {
 			  }
 			  System.out.println("---------------------------------- article added ----------------------------------");
 				
-		 } catch(Exception e) { System.out.println("file doens't exist");}
+		 } catch(Exception e) { 
+			 log.error( e.getMessage());
+			 System.out.println("file doens't exist");
+		 }
 	}
 
 	
 	/*
 	 * Method that displays restart/quit options for user to choose from
 	 */
-	private void subMenu() {
-		System.out.println("   Hit enter to continue or type exit to quit    ");
-		Scanner sc = new Scanner(System.in);
+	private void exitMenu(Scanner sc) {
+		System.out.println("***Hit enter to continue or type 'exit' to quit***");
+		//Scanner sc = new Scanner(System.in);
 		String nextInput = sc.nextLine();
 		if (nextInput.isEmpty()) {
 			System.out.println("|||||||||||||||| New ||||||||||| Ticket ||||||||||||||||");
@@ -201,9 +220,10 @@ public class UserInterface {
 			System.out.println("\t" + j.getArticle()[0] + " ");
 			System.out.println("");
 			System.out.println("\t" +j.getArticle()[1] + " ");
-			System.out.println(" -------------------------------------------- \r ");
-		} catch(IndexOutOfBoundsException e) {
 			
+			System.out.println(" -------------------------------------------- ||  --------------------------------------------  \r");
+		} catch(IndexOutOfBoundsException e) {
+			log.error(e.getMessage());
 		}
 	}
 

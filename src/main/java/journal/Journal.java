@@ -17,7 +17,9 @@ public class Journal {
 	private Date createdDate;
 	private String[] article;
 	
-	
+	Journal(){
+		
+	}
 	public Journal(String title, String author, Date createdDate, String[] article) {
 		super();
 		this.title = title;

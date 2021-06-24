@@ -4,10 +4,11 @@
 package journal;
 
 /**
- * @author ocean
+ * Custom Exception is used to represent the user input error
+ * @author Kenneth Eng
  *
  */
-public class UserInputException extends Exception {
+public class UserInputException extends RuntimeException {
 
 	public UserInputException() {
 		super();

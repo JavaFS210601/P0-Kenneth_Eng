@@ -201,6 +201,7 @@ public class UserInterface {
 			case "filter": filterMenu();
 				break;
 			case "unfilter": isFilterByAuthor = false;
+							isFilterByCategory = false;
 				break;
 			default:
 				throw new UserInputException("user enter wrong string keywords:" + input);

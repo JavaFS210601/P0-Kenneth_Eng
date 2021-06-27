@@ -121,6 +121,7 @@ public class UserInterface {
 		String input = sc.next();
 		switch(input) {
 			case "author":
+				isFilterByCategory = false;
 				System.out.println("please choose a author for filtering ");
 				System.out.println(dao.getAuthors().toString());
 				filter_value = sc.nextInt();
@@ -133,6 +134,7 @@ public class UserInterface {
 				}
 				break;
 			case "category":
+				isFilterByAuthor = false;
 				System.out.println("please choose a category for filtering ");
 				System.out.println(dao.getAllCategory().toString());
 				filter_value = sc.nextInt();
@@ -156,9 +158,10 @@ public class UserInterface {
 		// loadAllArticles();
 		clearScreen();
 		if (isFilterByCategory) {
+			System.out.println("Filtered by Category");
 			journals = dao.getJournalsByCategory(filter_value);
 		} else if (isFilterByAuthor) {
-			
+			System.out.println("Filtered by Author");
 			journals = dao.getJournalsByAuthorName(filter_value);
 		} else {
 			loadArticles(50);

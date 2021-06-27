@@ -16,6 +16,8 @@ import javax.print.attribute.standard.OutputDeviceAssigned;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import jdk.internal.org.jline.utils.Log;
+
 /**
  * User Interface of the command line journal program.
  * 
@@ -26,12 +28,13 @@ public class UserInterface {
 	JournalDao dao = new JournalDao();
 	ArrayList<Journal> journals = new ArrayList<Journal>();
 	Boolean isRunning = true;
-
+	Boolean isFilterByAuthor = false;
+	Boolean isFilterByCategory = false;
+	int filter_value;
 	public static Logger log = LogManager.getLogger(UserInterface.class);
 
 	public static void main(String[] args) {
-		log.info("This is an Journal Application!");
-		// log.error("This is an ERROR level log message!");
+		log.info("Journal Application Starting!");
 
 		// Intantiate a postgreSQL connection
 		PostgreSQLConnect pc = PostgreSQLConnect.getInstacne();
@@ -87,7 +90,7 @@ public class UserInterface {
 	/*
 	 * Method that load all of the articles in the database
 	 */
-	private void loadAllArticles() throws SQLException {
+	private void loadArticles() throws SQLException {
 
 		journals = dao.retrieveAllJournals();
 
@@ -99,9 +102,7 @@ public class UserInterface {
 	 * @param number_of_articles: use enter the number of article
 	 */
 	private void loadArticles(int number_of_articles) throws Exception {
-//		if (dao.getAuthors().containsKey("kenneth eng")) {
-//			System.out.println(" list of authors:"  + dao.getAuthors());
-//		}
+		
 
 		journals = dao.retrieveJournals(number_of_articles);
 		if (journals == null) {
@@ -112,15 +113,56 @@ public class UserInterface {
 	/*
 	 * Method that displays options for user to choose from
 	 */
-	private void EditMenu() throws UserInputException {
+	private void filterMenu() throws UserInputException, SQLException {
+		//boolean isFilter = true;
+
+		System.out.println("***type in 'author' or 'category' to set the filter***");
+		Scanner sc = new Scanner(System.in);
+		String input = sc.next();
+		switch(input) {
+			case "author":
+				System.out.println("please choose a author for filtering ");
+				System.out.println(dao.getAuthors().toString());
+				filter_value = sc.nextInt();
+				journals = dao.getJournalsByAuthorName(filter_value);
+				System.out.println("filter applied"  );
+				if (journals.size() == 0 ) {
+					isFilterByAuthor = false;
+				} else {
+					isFilterByAuthor = true;
+				}
+				break;
+			case "category":
+				System.out.println("please choose a category for filtering ");
+				System.out.println(dao.getAllCategory().toString());
+				filter_value = sc.nextInt();
+				journals = dao.getJournalsByCategory(filter_value);
+				System.out.println("filter applied"  );
+				if (journals.size() == 0 ) {
+					isFilterByCategory = false;
+				} else {
+					isFilterByCategory = true;
+				}
+			break;
+		}
+		
 
 	}
 
+	/*
+	 * Method that displays list of journals and commands for user to enter
+	 */
 	private void listArticleMenu(Scanner sc) throws Exception {
 		// loadAllArticles();
-
-		loadArticles(5);
-
+		clearScreen();
+		if (isFilterByCategory) {
+			journals = dao.getJournalsByCategory(filter_value);
+		} else if (isFilterByAuthor) {
+			
+			journals = dao.getJournalsByAuthorName(filter_value);
+		} else {
+			loadArticles(50);
+		}
 		System.out.println("Number of Journals :  " + journals.size());
 		for (int i = 0; i < journals.size(); i++) {
 			System.out.print(i + 1 + ". " + journals.get(i).getTitle() + " ");
@@ -128,6 +170,7 @@ public class UserInterface {
 		System.out.println("");
 		System.out.println("");
 		System.out.println("***Please type in the number of the article***");
+		System.out.println("***type 'filter' to filter record by author, unfilter to reset ***");
 		System.out.println("***type 'add' to insert record with local file***");
 		System.out.println("***type 'create' to make a record with command line***");
 		System.out.println("***type 'delete' to delete a record ***");
@@ -144,7 +187,7 @@ public class UserInterface {
 
 		} else if (sc.hasNext()) {
 			String input = sc.next();
-
+			input.toLowerCase();
 			switch (input) {
 			case "add":
 				addArticleSubMenu();
@@ -155,6 +198,10 @@ public class UserInterface {
 			case "delete":
 				removeArticle();
 				break;
+			case "filter": filterMenu();
+				break;
+			case "unfilter": isFilterByAuthor = false;
+				break;
 			default:
 				throw new UserInputException("user enter wrong string keywords:" + input);
 			}
@@ -162,7 +209,7 @@ public class UserInterface {
 		}
 
 		exitMenu();
-		clearScreen();
+		
 	}
 
 	/*
@@ -203,16 +250,30 @@ public class UserInterface {
 	 */
 	private void addArticleSubMenu() throws UserInputException, SQLException {
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Please enter the text file path:");
+		
+		System.out.println("|\t You can create new article here " + "\t|");
 
+		System.out.println("What is the title of the article ");
+		String title = sc.nextLine();
+		System.out.println("Whos is the firstname of author ");
+		String firstname = sc.nextLine();
+		System.out.println("Whos is the lastname of author ");
+		String lastname = sc.nextLine();
+		
+		System.out.println("Please choose from one of following category");
+		System.out.println(dao.getAllCategory());
+		int category = sc.nextInt();
+		String author = firstname + " " + lastname;
+		
+		System.out.println("Please enter the text file path:");
 		String path = sc.next();
 
 		if (!path.isBlank()) {
 			StringBuilder output = readFile(path);
-			if (output != null) {
+			if (!output.isEmpty()) {
 				String out = output.toString();
 				Date today = new Date();
-				Journal j = new Journal("", "", today, out, 1);
+				Journal j = new Journal(title, author, today, out, category);
 				dao.insertJournal(j);
 			}
 		} else {
@@ -256,10 +317,21 @@ public class UserInterface {
 	}
 
 	public void removeArticle() throws SQLException {
-		System.out.println("Which one do you want to delete?");
-		Scanner sc = new Scanner(System.in);
-		int id = sc.nextInt() - 1;
-		dao.deleteJournal(journals.get(id));
+		
+			System.out.println("Which one do you want to delete?");
+			Scanner sc = new Scanner(System.in);
+			if (sc.hasNextInt()) {
+				int id = sc.nextInt() - 1;
+				dao.deleteJournal(journals.get(id));
+				journals.remove(id);
+			} else {
+				log.warn("Unable to delete the article. Please choose from the list.");
+			}
+			if (journals.size() == 0 ) {
+				isFilterByCategory = false;
+				isFilterByAuthor = false;
+			}
+		
 	}
 
 	/*
@@ -298,6 +370,7 @@ public class UserInterface {
 		System.out.println("|\t title: " + j.getTitle() + "\t|");
 		System.out.println("|\t author: " + j.getAuthor() + "\t|");
 		System.out.println("|\t date: " + j.getCreatedDate() + "\t|");
+		System.out.println("|\t category: " + j.getCategory() + "\t|");
 		try {
 			int l = j.getArticle().length();
 			System.out.println("\t" + j.getArticle() + " ");

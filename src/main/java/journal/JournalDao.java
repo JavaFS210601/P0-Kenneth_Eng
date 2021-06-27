@@ -10,14 +10,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 public class JournalDao implements JournalDaoImpl {
 	private HashMap<Integer, String> listOfCategorys;
 	private ArrayList<Journal> listOfJournals;
-
+	private HashMap<Integer, String> listOfAuthors;
+	
 	JournalDao() {
 		listOfCategorys = new HashMap<Integer, String>();
 		listOfJournals = new ArrayList<Journal>();
+		listOfAuthors = new HashMap<Integer, String>();
 		// retrieveAllJournals();
 
 	}
@@ -27,6 +30,11 @@ public class JournalDao implements JournalDaoImpl {
 		// retrieveAllJournals(num_of_article);
 	}
 
+	/*
+	 * Method that delete a category to category table
+	 *
+	 * @param category_id: specific the category with id to delete
+	 */
 	@Override
 	public void deleteCategory(int catgory_id)  throws SQLException {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
@@ -37,6 +45,11 @@ public class JournalDao implements JournalDaoImpl {
 		ps.executeUpdate();
 	}
 
+	/*
+	 * Method that updates a category in the category table 
+	 *
+	 * @param category_id: specific the category with id to update
+	 */
 	@Override
 	public void updateCategory(int catgory_id) throws SQLException {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
@@ -47,18 +60,117 @@ public class JournalDao implements JournalDaoImpl {
 		ps.executeUpdate();
 	}
 
+	/*
+	 * Method that inserts a category from category table 
+	 *
+	 * @param category_id: specific the category with id to insert
+	 */
 	@Override
-	public void insertAuthor(String firstname, String lastname) throws SQLException {
+	public void insertCategory(String name) throws SQLException {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
-		String sql = "INSERT INTO authors(author_firstname, author_lastname) " + "VALUES (?,?);";
+		String sql = "INSERT INTO authors(category_name) " + "VALUES (?);";
 		// Statement s = conn.createStatement();
 		PreparedStatement ps = conn.prepareStatement(sql);
-		ps.setString(1, firstname);
-		ps.setString(2, lastname);
+		ps.setString(1, name);
 		ps.executeUpdate();
 
 	}
+	
+	/*
+	 * Method that  retrieves all author name from journals
+	 */
+	public HashMap<Integer, String> getAuthors() throws SQLException {
+		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
+		String sql = "SELECT DISTINCT journal_author FROM journals;";
+		ResultSet rs = null;
+		Statement s = conn.createStatement();
+		rs = s.executeQuery(sql);
+		
+		int i = 0;
+		while (rs.next()) {
+			//int i = rs.getInt("journal_author");
+			String a = rs.getString("journal_author");
+			listOfAuthors.put(i, a);
+			i++;
+		}
+		return listOfAuthors;
+	}
+	
+	/*
+	 * Method that  retrieves journal by author name from journals table
+	 * 
+	 * @param id: specific the id of the author in the list of author 
+	 */
+	public ArrayList<Journal> getJournalsByAuthorName (int id) throws SQLException {
+		//ArrayList<Journal> listOfJournals = new ArrayList<Journal>();
+		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
+		ResultSet rs = null;
+		String sql = "SELECT * FROM journals WHERE journal_author = ?;";
+		PreparedStatement ps = conn.prepareStatement(sql);
+		ps.setString(1, listOfAuthors.get(id));
+		//System.out.println(ps.toString());
+		rs = ps.executeQuery();
+		while (rs.next()) {
+			String arr = rs.getString("journal_content");
+			Journal j = new Journal(rs.getInt("journal_id"), rs.getString("journal_title"), rs.getString("journal_author"),
+					rs.getDate("journal_create_date"), arr, 1);
+			listOfJournals.add(j);
 
+		}
+		
+		return listOfJournals ;
+	}
+
+	/*
+	 * Method that  retrieves journal by category name from journals table
+	 * 
+	 * @param id: specific the id of the author in the list of category 
+	 */
+	@Override
+	public ArrayList<Journal> getJournalsByCategory (int id) throws SQLException {
+		//ArrayList<Journal> listOfJournals = new ArrayList<Journal>();
+		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
+		ResultSet rs = null;
+		String sql = "SELECT * FROM journals WHERE journal_category_fk = ?;";
+		PreparedStatement ps = conn.prepareStatement(sql);
+		ps.setInt(1, id);
+		
+		rs = ps.executeQuery();
+		while (rs.next()) {
+			String arr = rs.getString("journal_content");
+			Journal j = new Journal(rs.getInt("journal_id"), rs.getString("journal_title"), rs.getString("journal_author"),
+					rs.getDate("journal_create_date"), arr, 1);
+			listOfJournals.add(j);
+
+		}
+		
+		return listOfJournals ;
+	}
+	
+	/*
+	 * Method that  retrieves all category stored in categorys table
+	 */
+	@Override
+	public HashMap<Integer, String> getAllCategory() throws SQLException {
+		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
+		ResultSet rs = null;
+		String sql = "SELECT * FROM categorys";
+		Statement s = conn.createStatement();
+		rs = s.executeQuery(sql);
+		while (rs.next()) {
+			int i = rs.getInt("category_id");
+			String a = rs.getString("category_name");
+			listOfCategorys.put(i, a);
+
+		}
+		return listOfCategorys;
+	}
+	
+	/*
+	 * Method that delete a  journal from journals table
+	 *
+	 * @param category_id: specific the journal with id to delete
+	 */
 	@Override
 	public void deleteJournal(Journal journal) throws SQLException {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
@@ -69,12 +181,17 @@ public class JournalDao implements JournalDaoImpl {
 		ps.executeUpdate();
 	}
 
+
+	/*
+	 * Method that inserts a journal into the journals table 
+	 *
+	 * @param journal: the new journal to be inserted
+	 */
 	@Override
 	public void insertJournal(Journal journal) throws SQLException {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
 
-		DateFormat dateformat = new SimpleDateFormat("yyyy-mm-dd");
-		// Date date = new Date();
+		DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd");
 
 		String createDate = dateformat.format(journal.getCreatedDate());
 
@@ -93,37 +210,25 @@ public class JournalDao implements JournalDaoImpl {
 
 	}
 
-	@Override
-	public HashMap<Integer, String> getAllCategory() throws SQLException {
-		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
-		ResultSet rs = null;
-		String sql = "SELECT * FROM categorys";
-		Statement s = conn.createStatement();
-		rs = s.executeQuery(sql);
-		while (rs.next()) {
-			int i = rs.getInt("category_id");
-			String a = rs.getString("category_name");
-			listOfCategorys.put(i, a);
-
-		}
-		return listOfCategorys;
-	}
-
+	/*
+	 * Method that retrieve a list of journal from journals table
+	 *
+	 * @param number_of_articles: the maximum amount of journals can be retrieved
+	 */
 	@Override
 	public ArrayList<Journal> retrieveJournals(int number_of_articles) throws SQLException {
 		// try (Connection conn = PostgreSQLConnect.getInstacne().getConnection()) {
 		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
 		ResultSet rs = null; // initailize an empty set that will store the results of our query
-		String sql = "SELECT * FROM journals";
+		String sql = "SELECT * FROM journals LIMIT " + number_of_articles;
 		Statement s = conn.createStatement();
 		rs = s.executeQuery(sql);
 
-		// ArrayList<Journal> journalList = new ArrayList<>();
 		int i = 0;
 		while (rs.next() && i < number_of_articles) {
 			String arr = rs.getString("journal_content");
-			Journal j = new Journal(rs.getInt("journal_id"), rs.getString("journal_title"), "kenneth eng",
-					rs.getDate("journal_create_date"), arr, 1);
+			Journal j = new Journal(rs.getInt("journal_id"), rs.getString("journal_title"), rs.getString("journal_author"),
+					rs.getDate("journal_create_date"), arr, rs.getInt("journal_category_fk"));
 			listOfJournals.add(j);
 
 			i++;
@@ -133,49 +238,46 @@ public class JournalDao implements JournalDaoImpl {
 		// System.out.println(listOfJournals.toString());
 		return listOfJournals;
 	}
-	
+	/*
+	 * Method that retrieve a list of journal from journals table
+	 *
+	 */
 	@Override
 	public ArrayList<Journal> retrieveAllJournals() throws SQLException {
-		listOfJournals = new ArrayList<Journal>();
+		//listOfJournals = new ArrayList<Journal>();
+		Connection conn = PostgreSQLConnect.getInstacne().getConnection();
+		ResultSet rs = null;
+		String sql = "SELECT * FROM journals";
+		Statement s = conn.createStatement();
+		rs = s.executeQuery(sql);
+		int i = 0;
+		while (rs.next()) {
+			String arr = rs.getString("journal_content");
+			Journal j = new Journal(rs.getInt("journal_id"), rs.getString("journal_title"), rs.getString("journal_author"),
+					rs.getDate("journal_create_date"), arr, rs.getInt("journal_category_fk"));
+			listOfJournals.add(j);
+			i++;
 
-		String arr = " At w3schools.com you will learn how to make a website. \n "
-				+ "Contented get distrusts certainty nay are frankness concealed ham. \n"
-				+ "On unaffected resolution on considered of. No thought me husband or colonel forming effects. \n"
-				+ "End sitting shewing who saw besides son musical adapted. Contrasted interested eat \n"
-				+ "alteration pianoforte sympathize was. He families believed if no elegance interest surprise an. \n"
-				+ "It abode wrong miles an so delay plate. She relation own put outlived may disposed. \n"
-				+ "Why end might ask civil again spoil. She dinner she our horses depend. Remember at children \n"
-				+ "by reserved to vicinity. In affronting unreserved delightful simplicity ye. Law own advantage \n"
-				+ "furniture continual sweetness bed agreeable perpetual. Oh song well four only head busy it. \n"
-				+ " Afford son she had lively living. Tastes lovers myself too formal season our valley boy. \n"
-				+ "Lived it their their walls might to by young. ";
-//		String[] arr1 = {"this is article 1." + arr[0], arr[1]} ; 
-//		String[] arr2 = {"this is article 2." + arr[0], arr[1]} ; 
-//		String[] arr3 = {"this is article 3." + arr[0], arr[1]} ; 
-//		String[] arr4 = {"this is article 4." + arr[0], arr[1]} ;
-//		String[] arr5 = {"this is article 5." + arr[0], arr[1]} ; ;
-		Journal j = new Journal(1, "Article 1", "Kenneth Eng", new Date(), arr, 1);
-		Journal j1 = new Journal(2, "Article 2", "Kenneth Eng", new Date(), arr, 1);
-		Journal j2 = new Journal(3, "Article 3", "Kenneth Eng", new Date(), arr, 1);
-		Journal j3 = new Journal(4, "Article 4", "Kenneth Eng", new Date(), arr, 1);
-		Journal j4 = new Journal(5, "Article 5", "Kenneth Eng", new Date(), arr, 1);
-		listOfJournals.add(j);
-		listOfJournals.add(j1);
-		listOfJournals.add(j2);
-		listOfJournals.add(j3);
-		listOfJournals.add(j4);
+		}
 		return listOfJournals;
 	}
 
+	/*
+	 * return the journals by its id within the journal list
+	 */
 	@Override
 	public Journal getJournalById(int id) throws SQLException {
 		return listOfJournals.get(id);
 	}
 
+	/*
+	 * reset the hashmaps
+	 */
 	@Override
 	public void reset() {
+		//listOfAuthors.clear();
 		listOfJournals.clear();
-		listOfCategorys.clear();
+		//listOfCategorys.clear();
 	}
 
 }

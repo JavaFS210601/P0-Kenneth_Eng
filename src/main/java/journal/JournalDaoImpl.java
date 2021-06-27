@@ -10,10 +10,11 @@ public interface JournalDaoImpl {
 	ArrayList<Journal> retrieveAllJournals() throws SQLException;
 	ArrayList<Journal> retrieveJournals(int number_of_articles) throws SQLException;
 	HashMap<Integer, String> getAllCategory() throws SQLException;
+	ArrayList<Journal> getJournalsByCategory (int id) throws SQLException;
 	
 	void deleteCategory(int catgory_id)  throws SQLException ;
 	void updateCategory(int catgory_id) throws SQLException;
-	void insertAuthor(String firstname, String lastname) throws SQLException;
+	void insertCategory(String name) throws SQLException;
 	void insertJournal(Journal journal) throws SQLException;
 	void deleteJournal(Journal journal) throws SQLException;
 	void reset();

@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.*; //these are for your assert me
  *  
  */
 
+import java.sql.SQLException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,9 +57,12 @@ public class unitTest {
 	@Test 
 	public void testJournalMethods() {
 		System.out.println("TESTING Journal Object methods...");
+		try {
 		Journal journal = dao.getJournalById(1);
 		result = journal.getAuthor();
-		
+		} catch(SQLException s) {
+			s.printStackTrace();
+		}
 		assertEquals(author, result); 
 		
 		// if assertEquals is true, this line will execute

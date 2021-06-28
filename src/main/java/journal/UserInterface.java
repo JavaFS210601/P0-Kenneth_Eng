@@ -9,9 +9,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import javax.print.attribute.standard.OutputDeviceAssigned;
+import javax.swing.text.html.HTMLDocument.Iterator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -123,9 +127,20 @@ public class UserInterface {
 			case "author":
 				isFilterByCategory = false;
 				System.out.println("please choose a author for filtering ");
-				System.out.println(dao.getAuthors().toString());
-				filter_value = sc.nextInt();
-				journals = dao.getJournalsByAuthorName(filter_value);
+				//System.out.println(dao.getAuthors().toString());
+				HashMap<Integer, String > authorsList = dao.getAuthors();
+				for (Map.Entry<Integer, String> element : authorsList.entrySet()) {
+					int key = (int)element.getKey();
+					System.out.print(key+1 + ":" + element.getValue() + " " );
+				}
+				System.out.println("" );
+				try {
+					filter_value = sc.nextInt() - 1; // filter_value is 1 less than the display
+					journals = dao.getJournalsByAuthorName(filter_value);
+					
+				}catch (Exception e) {
+					throw new UserInputException("User enter wrong input at filter author");
+				}
 				System.out.println("filter applied"  );
 				if (journals.size() == 0 ) {
 					isFilterByAuthor = false;
@@ -136,10 +151,22 @@ public class UserInterface {
 			case "category":
 				isFilterByAuthor = false;
 				System.out.println("please choose a category for filtering ");
-				System.out.println(dao.getAllCategory().toString());
-				filter_value = sc.nextInt();
-				journals = dao.getJournalsByCategory(filter_value);
+				//System.out.println(dao.getAllCategory().toString());
+				HashMap<Integer, String > categorysList = dao.getAllCategory();
+				for (Map.Entry<Integer, String> element : categorysList.entrySet()) {
+					int key = (int)element.getKey();
+					System.out.print(key + ":" + element.getValue() + " " );
+				}
+				System.out.println("" );
+				try {
+					filter_value = sc.nextInt(); 
+					System.out.println(filter_value );
+	 				journals = dao.getJournalsByCategory(filter_value);
+				}catch (Exception e) {
+					throw new UserInputException("User enter wrong input at filter category");
+				}
 				System.out.println("filter applied"  );
+				
 				if (journals.size() == 0 ) {
 					isFilterByCategory = false;
 				} else {
@@ -374,7 +401,8 @@ public class UserInterface {
 		System.out.println("|\t title: " + j.getTitle() + "\t|");
 		System.out.println("|\t author: " + j.getAuthor() + "\t|");
 		System.out.println("|\t date: " + j.getCreatedDate() + "\t|");
-		System.out.println("|\t category: " + j.getCategory() + "\t|");
+		HashMap<Integer, String> cats = dao.getAllCategory();
+		System.out.println("|\t category: " + cats.get(j.getCategory()) + "\t|");
 		try {
 			int l = j.getArticle().length();
 			System.out.println("\t" + j.getArticle() + " ");

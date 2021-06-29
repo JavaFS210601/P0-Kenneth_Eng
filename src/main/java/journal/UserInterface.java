@@ -23,18 +23,18 @@ import org.apache.logging.log4j.Logger;
 import jdk.internal.org.jline.utils.Log;
 
 /**
- * User Interface of the command line journal program.
+ * User Interface of the command line journal archive program.
  * 
  * @author Kenneth Eng
  *
  */
 public class UserInterface {
-	JournalDao dao = new JournalDao();
-	ArrayList<Journal> journals = new ArrayList<Journal>();
-	Boolean isRunning = true;
-	Boolean isFilterByAuthor = false;
-	Boolean isFilterByCategory = false;
-	int filter_value;
+	private JournalDao dao = new JournalDao();
+	private ArrayList<Journal> journals = new ArrayList<Journal>();
+	private Boolean isRunning = true;
+	private Boolean isFilterByAuthor = false;
+	private Boolean isFilterByCategory = false;
+	private int filter_value;
 	public static Logger log = LogManager.getLogger(UserInterface.class);
 
 	public static void main(String[] args) {
@@ -42,10 +42,10 @@ public class UserInterface {
 
 		// Intantiate a postgreSQL connection
 		PostgreSQLConnect pc = PostgreSQLConnect.getInstacne();
+		
 		UserInterface menu = new UserInterface();
 		try {
 
-			Connection conn = pc.getConnection();
 			menu.Render();
 
 		} catch (Exception e) {
@@ -69,9 +69,9 @@ public class UserInterface {
 
 			} catch (UserInputException ue) {
 				log.error(ue.getMessage());
-
+				System.out.println("");
 				// System.out.println("InValid Input. Please try again.\n");
-				System.out.println("|||||||||||||||| New ||||||||||| Ticket ||||||||||||||||");
+				System.out.println("|||||||||||||||| New ||||||||||| Session ||||||||||||||||");
 				System.out.println("\n");
 			} catch (SQLException s) {
 				log.error(s.getMessage());
@@ -204,6 +204,7 @@ public class UserInterface {
 		System.out.println("***type 'add' to insert record with local file***");
 		System.out.println("***type 'create' to make a record with command line***");
 		System.out.println("***type 'delete' to delete a record ***");
+		System.out.println("***type 'update' to update a record ***");
 
 		if (sc.hasNextInt()) {
 			int input = sc.nextInt();
@@ -228,6 +229,8 @@ public class UserInterface {
 			case "delete":
 				removeArticle();
 				break;
+			case "update": updateArticle();
+				break;
 			case "filter": filterMenu();
 				break;
 			case "unfilter": isFilterByAuthor = false;
@@ -242,9 +245,55 @@ public class UserInterface {
 		exitMenu();
 		
 	}
+	
+	/*
+	 * Method that prompt user for inputs to update a article on command line
+	 * interface
+	 */
+	private void updateArticle() throws SQLException {
+		Scanner sc = new Scanner(System.in);
+		int index;
+		// System.out.println(dao.getAuthors());
+		System.out.println("|\t You can update a article here " + "\t|");
+		System.out.println("***Please type in the number of the article***");
+		try {
+			String input = sc.nextLine();
+			index = Integer.valueOf(input);
+			System.out.println(index);
+		}catch (Exception e) {
+			throw new UserInputException("User enter wrong input at choosing  article to update");
+		}
+		
+		System.out.println("What is the title of the article ");
+		String title = sc.nextLine();
+		System.out.println("Whos is the firstname of author ");
+		String firstname = sc.nextLine();
+		System.out.println("Whos is the lastname of author ");
+		String lastname = sc.nextLine();
+		String author = firstname + " " + lastname;
+
+		System.out.println("Please enter some text ");
+		String content = sc.nextLine();
+		// addArticleSubMenu(sc);
+		System.out.println("Please choose from one of following category");
+		System.out.println(dao.getAllCategory());
+		int category = sc.nextInt();
+
+		Date today = new Date();
+		Journal j =  dao.getJournalById(index-1);
+		j.setArticle(content);
+		j.setAuthor(author);
+		j.setCategory(category);
+		j.setTitle(title);
+				//new Journal(title, author, today, content, category);
+		dao.updateJournal(j);
+		// dao.insertAuthor(firstname.toLowerCase(), lastname.toLowerCase());
+		System.out.println("---------------------------------- article updated ----------------------------------");
+
+	}
 
 	/*
-	 * Method that prompt user for inputs to create article on command line
+	 * Method that prompt user for inputs to create a article on command line
 	 * interface
 	 */
 	private void createArticle() throws SQLException {
@@ -275,6 +324,28 @@ public class UserInterface {
 
 	}
 
+	/*
+	 * Method that prompt user for inputs to create a article on command line
+	 * interface
+	 */
+	public void removeArticle() throws SQLException {
+		
+			System.out.println("Which one do you want to delete?");
+			Scanner sc = new Scanner(System.in);
+			if (sc.hasNextInt()) {
+				int id = sc.nextInt() - 1;
+				dao.deleteJournal(journals.get(id));
+				journals.remove(id);
+			} else {
+				log.warn("Unable to delete the article. Please choose from the list.");
+			}
+			if (journals.size() == 0 ) {
+				isFilterByCategory = false;
+				isFilterByAuthor = false;
+			}
+		
+	}
+	
 	/*
 	 * Method that ask user for the local file path and call the readfile() method
 	 * to attempt to create file.
@@ -316,9 +387,7 @@ public class UserInterface {
 	}
 
 	/*
-	 * Method that read local file
-	 * 
-	 * The method will handle the file Exceptions on its own
+	 * Method that read local file. it will handle the file Exceptions on its own
 	 * 
 	 * @param path: the file path
 	 */
@@ -347,23 +416,6 @@ public class UserInterface {
 		return output;
 	}
 
-	public void removeArticle() throws SQLException {
-		
-			System.out.println("Which one do you want to delete?");
-			Scanner sc = new Scanner(System.in);
-			if (sc.hasNextInt()) {
-				int id = sc.nextInt() - 1;
-				dao.deleteJournal(journals.get(id));
-				journals.remove(id);
-			} else {
-				log.warn("Unable to delete the article. Please choose from the list.");
-			}
-			if (journals.size() == 0 ) {
-				isFilterByCategory = false;
-				isFilterByAuthor = false;
-			}
-		
-	}
 
 	/*
 	 * Method that displays restart/quit options for user to choose from
@@ -373,13 +425,15 @@ public class UserInterface {
 		Scanner sc2 = new Scanner(System.in);
 		String nextInput = sc2.nextLine();
 		if (nextInput.isEmpty()) {
-			System.out.println("|||||||||||||||| New ||||||||||| Ticket ||||||||||||||||");
+			System.out.print("");
+			System.out.println("|||||||||||||||| New ||||||||||| Session ||||||||||||||||");
 			System.out.println("\n");
 		} else if (nextInput.toLowerCase().contains("exit")) {
 			isRunning = false;
 			System.out.println("Program terminated");
 		} else {
-			System.out.println("|||||||||||||||| New ||||||||||| Ticket ||||||||||||||||");
+			System.out.println("");
+			System.out.println("|||||||||||||||| New ||||||||||| Session ||||||||||||||||");
 			System.out.println("\n");
 		}
 		;
@@ -406,8 +460,6 @@ public class UserInterface {
 		try {
 			int l = j.getArticle().length();
 			System.out.println("\t" + j.getArticle() + " ");
-			// System.out.println("");
-			// System.out.println("\t" +j.getArticle()[1] + " ");
 
 			System.out.println(
 					" -------------------------------------------- ||  --------------------------------------------  \r");
@@ -423,6 +475,6 @@ public class UserInterface {
 		dao.reset();
 //	    System.out.print("\033[H\033[2J");  
 //	    System.out.flush();
-		// System.out.print("\033\143");
+
 	}
 }

@@ -173,9 +173,38 @@ public class JournalDao implements JournalDaoImpl {
 	}
 	
 	/*
-	 * Method that delete a  journal from journals table
+	 * Method that update a journal in journals table
 	 *
-	 * @param category_id: specific the journal with id to delete
+	 * @param journal: the journal used to replace the old journal record
+	 */
+	//@Override
+	public void updateJournal(Journal journal) throws SQLException {
+		try(Connection conn = PostgreSQLConnect.getInstacne().getConnection()){
+			String sql = "UPDATE journals "
+						+ "SET journal_title = ?, journal_author = ?, "
+						+ "journal_content = ?, journal_create_date = ?, "
+						+ "journal_category_fk = ? " 
+						+ "WHERE  journal_id = ?; ";
+			
+			DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd");
+			String createDate = dateformat.format(journal.getCreatedDate());
+			java.sql.Date date = java.sql.Date.valueOf(createDate);
+			
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, journal.getTitle());
+			ps.setString(2, journal.getAuthor());
+			ps.setString(3, journal.getArticle());
+			ps.setDate(4, date);
+			ps.setInt(5, journal.getCategory());
+			ps.setInt(6, journal.getId());
+			ps.executeUpdate();
+		}
+	}
+	
+	/*
+	 * Method that delete a journal in journals table
+	 *
+	 * @param journal: specific the journal with id to delete
 	 */
 	@Override
 	public void deleteJournal(Journal journal) throws SQLException {
@@ -202,7 +231,7 @@ public class JournalDao implements JournalDaoImpl {
 	
 			String createDate = dateformat.format(journal.getCreatedDate());
 	
-			System.out.println("Create Date:" + createDate + " " + journal.getCategory());
+			//System.out.println("Create Date:" + createDate + " " + journal.getCategory());
 			java.sql.Date date = java.sql.Date.valueOf(createDate);
 			String sql = "INSERT INTO journals(journal_title, journal_author, journal_content, journal_create_date, journal_category_fk) "
 					+ "VALUES (?,?,?,?,?);";

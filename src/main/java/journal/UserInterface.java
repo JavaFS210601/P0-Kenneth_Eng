@@ -59,8 +59,8 @@ public class UserInterface {
 	 * Method that render the program command line UI
 	 */
 	public void Render() {
-		System.out.println("                          Welcome to Yinkin Journal                          ");
-		System.out.println("---------------------------------- Archive ----------------------------------");
+		System.out.println("                          Welcome to the Journal Archive                         ");
+		System.out.println("---------------------------------- START ----------------------------------");
 		Scanner sc = new Scanner(System.in);
 		while (isRunning) {
 			try {
@@ -185,10 +185,12 @@ public class UserInterface {
 		// loadAllArticles();
 		clearScreen();
 		if (isFilterByCategory) {
-			System.out.println("Filtered by Category");
+			HashMap<Integer, String > categorysList = dao.getAllCategory();
+			System.out.println("Filtered by category: " + categorysList.get(filter_value));
 			journals = dao.getJournalsByCategory(filter_value);
 		} else if (isFilterByAuthor) {
-			System.out.println("Filtered by Author");
+			HashMap<Integer, String > authorsList = dao.getAuthors();
+			System.out.println("Filtered by author name: " + authorsList.get(filter_value));
 			journals = dao.getJournalsByAuthorName(filter_value);
 		} else {
 			loadArticles(50);
@@ -200,11 +202,12 @@ public class UserInterface {
 		System.out.println("");
 		System.out.println("");
 		System.out.println("***Please type in the number of the article***");
-		System.out.println("***type 'filter' to filter record by author, unfilter to reset ***");
+		System.out.println("***type 'filter' to filter records , unfilter to reset ***");
 		System.out.println("***type 'add' to insert record with local file***");
 		System.out.println("***type 'create' to make a record with command line***");
 		System.out.println("***type 'delete' to delete a record ***");
 		System.out.println("***type 'update' to update a record ***");
+		System.out.println("***type 'exit' to quit ***");
 
 		if (sc.hasNextInt()) {
 			int input = sc.nextInt();
@@ -236,6 +239,10 @@ public class UserInterface {
 			case "unfilter": isFilterByAuthor = false;
 							isFilterByCategory = false;
 				break;
+			case "exit": System.out.println("Program terminated");
+						sc.close();
+						System.exit(0);
+				break;
 			default:
 				throw new UserInputException("user enter wrong string keywords:" + input);
 			}
@@ -259,7 +266,7 @@ public class UserInterface {
 		try {
 			String input = sc.nextLine();
 			index = Integer.valueOf(input);
-			System.out.println(index);
+			//System.out.println(index);
 		}catch (Exception e) {
 			throw new UserInputException("User enter wrong input at choosing  article to update");
 		}

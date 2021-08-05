@@ -9,6 +9,20 @@ A Java-based CLI (Command Line Interface) application. Data should be stored in 
 * E-Commerce platform
 * Anything else that can fulfill the requirements below!!!
 
+## My choice of the topic
+
+I made a Journal Archive application which has the following functions:
+
+1. User can view list of journals stored in the postgre database
+
+2. User can create new journal entry with the command line interface
+
+3. User can cretae new journal entry with absolute path of a text file
+
+4. User can take update a journal
+
+5. User can delete a journal
+
 ## Application Requirements
 
 * Your application must perform basic CRUD (create, read, update, delete) functionality with data stored in a database.
